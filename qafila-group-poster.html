@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قافلة — مساعد نشر الجروبات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171f;
+    --surface:#1d212b;
+    --surface-2:#262b37;
+    --surface-3:#2f3543;
+    --border:#333947;
+    --text:#f2f0e9;
+    --text-muted:#9aa1b0;
+    --accent:#e8a33d;
+    --accent-strong:#f2b558;
+    --accent-ink:#1c1305;
+    --success:#4fa982;
+    --success-ink:#0c1a15;
+    --danger:#c1584b;
+    --danger-strong:#d9695b;
+    --radius:14px;
+    --radius-sm:8px;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(232,163,61,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(79,169,130,.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+    min-height:100vh;
+    line-height:1.6;
+  }
+  h1,h2,h3, .display{ font-family:'Cairo','Tajawal',sans-serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:.02em; }
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+  :focus-visible{ outline:3px solid var(--accent-strong); outline-offset:2px; }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:28px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    margin-bottom:28px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-mark{
+    width:52px; height:52px; border-radius:16px;
+    background:linear-gradient(155deg, var(--accent-strong), var(--accent) 60%, #b97a22);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; box-shadow: var(--shadow);
+    flex-shrink:0;
+  }
+  .brand h1{ margin:0; font-size:26px; font-weight:800; }
+  .brand p{ margin:2px 0 0; color:var(--text-muted); font-size:13.5px; }
+  .header-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  /* ---------- Layout ---------- */
+  .layout{ display:grid; grid-template-columns:230px 1fr; gap:22px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .steps-nav{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:10px; position:sticky; top:16px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  @media (max-width:860px){
+    .steps-nav{ position:static; flex-direction:row; overflow-x:auto; gap:8px; }
+  }
+  .step-btn{
+    display:flex; align-items:center; gap:12px;
+    background:transparent; border:1px solid transparent; color:var(--text-muted);
+    padding:12px 12px; border-radius:var(--radius-sm); text-align:right; width:100%;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  @media (max-width:860px){ .step-btn{ width:auto; flex-shrink:0; } }
+  .step-btn .num{
+    width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--surface-3); font-family:'IBM Plex Mono',monospace; font-size:13px; flex-shrink:0;
+    color:var(--text-muted);
+  }
+  .step-btn .lbl{ font-weight:700; font-size:14.5px; }
+  .step-btn .sub{ font-size:11.5px; color:var(--text-muted); display:block; margin-top:1px; }
+  .step-btn.active{ background:var(--surface-2); border-color:var(--border); color:var(--text); }
+  .step-btn.active .num{ background:var(--accent); color:var(--accent-ink); }
+  .step-btn.done .num{ background:var(--success); color:var(--success-ink); }
+  .step-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .step-btn:not(:disabled):hover{ background:var(--surface-2); color:var(--text); }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:26px; min-height:420px; box-shadow:var(--shadow);
+  }
+  @media (max-width:600px){ .panel{ padding:18px; } }
+
+  .panel h2{ margin:0 0 4px; font-size:21px; }
+  .panel .hint{ color:var(--text-muted); font-size:13.5px; margin:0 0 20px; }
+
+  .info-box{
+    background:rgba(232,163,61,.08); border:1px solid rgba(232,163,61,.35);
+    border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; color:var(--text);
+    margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;
+  }
+  .info-box .ic{ flex-shrink:0; }
+
+  /* ---------- Forms ---------- */
+  label{ display:block; font-size:13.5px; font-weight:700; margin-bottom:6px; color:var(--text-muted); }
+  input[type=text], input[type=url], textarea{
+    width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    border-radius:var(--radius-sm); padding:11px 13px; font-family:inherit; font-size:14.5px;
+  }
+  input[type=text]:focus, input[type=url]:focus, textarea:focus{ border-color:var(--accent); }
+  .field{ margin-bottom:14px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px){ .row2{ grid-template-columns:1fr; } }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; justify-content:center;
+    padding:11px 18px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text); font-weight:700; font-size:14px;
+    transition:transform .08s, background .15s, border-color .15s;
+  }
+  .btn:hover{ background:var(--surface-3); }
+  .btn:active{ transform:scale(.97); }
+  .btn-accent{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .btn-accent:hover{ background:var(--accent-strong); }
+  .btn-success{ background:var(--success); border-color:var(--success); color:var(--success-ink); }
+  .btn-success:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background:transparent; }
+  .btn-danger{ color:var(--danger-strong); border-color:rgba(193,88,75,.4); background:transparent; }
+  .btn-danger:hover{ background:rgba(193,88,75,.12); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-sm{ padding:7px 12px; font-size:12.5px; border-radius:8px; }
+  .btn-block{ width:100%; }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:22px; }
+
+  /* ---------- Groups list (manage) ---------- */
+  .group-row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+    margin-bottom:8px;
+  }
+  .group-row .g-info{ flex:1; min-width:0; }
+  .group-row .g-name{ font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .group-row .g-url{ font-size:12px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .empty-state{
+    text-align:center; padding:40px 20px; color:var(--text-muted); border:1px dashed var(--border);
+    border-radius:var(--radius-sm);
+  }
+  .empty-state .ic{ font-size:34px; display:block; margin-bottom:10px; }
+
+  /* ---------- Select step ---------- */
+  .select-toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+  .select-toolbar input[type=text]{ flex:1; min-width:180px; }
+  .count-badge{
+    background:var(--surface-3); border-radius:999px; padding:5px 14px; font-size:12.5px;
+    font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--accent-strong);
+  }
+  .check-list{ display:flex; flex-direction:column; gap:8px; max-height:420px; overflow:auto; padding-left:2px; }
+  .check-item{
+    display:flex; align-items:center; gap:12px; padding:11px 14px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  }
+  .check-item.checked{ border-color:var(--accent); background:rgba(232,163,61,.08); }
+  .checkbox{
+    width:22px; height:22px; border-radius:6px; border:2px solid var(--border);
+    background:var(--surface-3); flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    transition:.15s;
+  }
+  .check-item.checked .checkbox{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .check-item label{ margin:0; font-weight:600; color:var(--text); flex:1; cursor:pointer; font-size:14.5px; }
+  .check-item .g-url-small{ font-size:11.5px; color:var(--text-muted); }
+
+  /* ---------- Content step ---------- */
+  textarea#postText{ min-height:160px; resize:vertical; }
+  .char-count{ text-align:left; font-size:12px; color:var(--text-muted); margin-top:4px; }
+  .drop-zone{
+    border:2px dashed var(--border); border-radius:var(--radius-sm); padding:26px; text-align:center;
+    color:var(--text-muted); font-size:13.5px; cursor:pointer; transition:.15s;
+  }
+  .drop-zone:hover, .drop-zone.drag{ border-color:var(--accent); background:rgba(232,163,61,.06); }
+  .media-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:10px; margin-top:14px; }
+  .media-thumb{
+    position:relative; border-radius:10px; overflow:hidden; background:var(--surface-3);
+    border:1px solid var(--border); aspect-ratio:1/1;
+  }
+  .media-thumb img, .media-thumb video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .media-thumb .file-ic{ display:flex; align-items:center; justify-content:center; height:100%; font-size:30px; }
+  .media-thumb .rm{
+    position:absolute; top:5px; left:5px; width:24px; height:24px; border-radius:50%;
+    background:rgba(20,23,31,.85); border:1px solid var(--border); color:var(--text);
+    display:flex; align-items:center; justify-content:center; font-size:13px; padding:0;
+  }
+  .media-thumb .name{
+    position:absolute; bottom:0; right:0; left:0; background:rgba(20,23,31,.85);
+    font-size:10px; padding:4px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* ---------- Publish step ---------- */
+  .route{ display:flex; align-items:center; gap:4px; overflow-x:auto; padding:6px 2px 18px; margin-bottom:8px; }
+  .route .dot{
+    width:30px; height:30px; border-radius:50%; background:var(--surface-3); border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;
+    font-family:'IBM Plex Mono',monospace; color:var(--text-muted);
+  }
+  .route .dot.done{ background:var(--success); border-color:var(--success); color:var(--success-ink); }
+  .route .dot.current{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); transform:scale(1.15); }
+  .route .dot.skipped{ background:transparent; border-color:var(--danger); color:var(--danger-strong); }
+  .route .line{ width:22px; height:2px; background:var(--border); flex-shrink:0; }
+
+  .stop-card{
+    background:linear-gradient(160deg, var(--surface-2), var(--surface));
+    border:1px solid var(--border); border-radius:var(--radius); padding:28px; text-align:center;
+  }
+  .stop-card .eyebrow{ color:var(--accent-strong); font-size:12.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+  .stop-card h3{ font-size:26px; margin:8px 0 4px; word-break:break-word; }
+  .stop-card .url{ color:var(--text-muted); font-size:12.5px; word-break:break-all; }
+  .stop-card .stop-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+
+  .preview-box{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:14px; margin-top:20px; font-size:13.5px; white-space:pre-wrap; max-height:140px; overflow:auto;
+    color:var(--text-muted);
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120%);
+    background:var(--surface-3); border:1px solid var(--accent); color:var(--text);
+    padding:12px 20px; border-radius:999px; font-size:13.5px; font-weight:700;
+    box-shadow:var(--shadow); transition:transform .25s ease; z-index:50;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+
+  .summary-list{ display:flex; flex-direction:column; gap:6px; margin:18px 0; text-align:right; }
+  .summary-row{ display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--surface-2); border-radius:8px; font-size:13.5px; }
+  .summary-row .tag{ font-size:11px; padding:2px 9px; border-radius:999px; font-weight:700; }
+  .tag.ok{ background:rgba(79,169,130,.18); color:var(--success); }
+  .tag.skip{ background:rgba(193,88,75,.18); color:var(--danger-strong); }
+
+  .footnote{ margin-top:36px; text-align:center; color:var(--text-muted); font-size:12px; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">🏮</div>
+      <div>
+        <h1>قافلة</h1>
+        <p>انشر بوستك في كل جروباتك، جروب ورا التاني</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-sm" id="exportBtn">⬇ تصدير قائمة الجروبات</button>
+      <label class="btn btn-sm" style="margin:0;">
+        ⬆ استيراد
+        <input type="file" id="importInput" accept="application/json" style="display:none;">
+      </label>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="steps-nav" id="stepsNav">
+      <button class="step-btn" data-step="1">
+        <span class="num">1</span>
+        <span><span class="lbl">الجروبات</span><span class="sub">إضافة روابط الجروبات</span></span>
+      </button>
+      <button class="step-btn" data-step="2">
+        <span class="num">2</span>
+        <span><span class="lbl">الاختيار</span><span class="sub">حدد الجروبات المستهدفة</span></span>
+      </button>
+      <button class="step-btn" data-step="3">
+        <span class="num">3</span>
+        <span><span class="lbl">المحتوى</span><span class="sub">النص والصور/الفيديو</span></span>
+      </button>
+      <button class="step-btn" data-step="4">
+        <span class="num">4</span>
+        <span><span class="lbl">النشر</span><span class="sub">جروب ورا التاني</span></span>
+      </button>
+    </nav>
+
+    <main class="panel">
+
+      <!-- STEP 1 -->
+      <section id="panel-1">
+        <h2>قائمة جروباتك</h2>
+        <p class="hint">دي القائمة اللي هتختار منها في كل مرة. تضيفها مرة واحدة بس.</p>
+
+        <div class="info-box">
+          <span class="ic">ℹ️</span>
+          <span>فيسبوك ما بيسمحش لأي أداة خارجية إنها تجيب جروباتك تلقائيًا (ده جزء من سياسة الخصوصية بتاعته، ومفيش أداة حقيقية بتقدر تلف عليها بدون ما تخالف شروط الاستخدام). عشان كده هنا بتضيف اسم ورابط كل جروب مرة واحدة، وهيتحفظوا في المتصفح بتاعك تلقائيًا — مش هتحتاج تكتبهم تاني.</span>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="gName">اسم الجروب</label>
+            <input type="text" id="gName" placeholder="مثال: سوق حاجات مستعملة - القاهرة">
+          </div>
+          <div class="field">
+            <label for="gUrl">رابط الجروب</label>
+            <input type="url" id="gUrl" placeholder="https://www.facebook.com/groups/xxxxxxx">
+          </div>
+        </div>
+        <button class="btn btn-accent" id="addGroupBtn">+ إضافة الجروب</button>
+
+        <div style="margin-top:24px;">
+          <div id="groupsList"></div>
+          <div id="groupsEmpty" class="empty-state" style="display:none;">
+            <span class="ic">📭</span>
+            لسه معندكش أي جروب مضاف. ضيف أول جروب من الفورم اللي فوق.
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-accent" id="toStep2">التالي: اختيار الجروبات ←</button>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section id="panel-2" style="display:none;">
+        <h2>اختر الجروبات اللي هتنشر فيها</h2>
+        <p class="hint">حدد جروب واحد أو أكتر. تقدر تدور بالاسم لو القائمة طويلة.</p>
+
+        <div class="select-toolbar">
+          <input type="text" id="searchGroups" placeholder="🔍 ابحث باسم الجروب...">
+          <span class="count-badge" id="selectedCount">0 محدد</span>
+          <button class="btn btn-sm" id="selectAllBtn">تحديد الكل</button>
+          <button class="btn btn-sm" id="clearAllBtn">إلغاء التحديد</button>
+        </div>
+
+        <div class="check-list" id="checkList"></div>
+        <div id="selectEmpty" class="empty-state" style="display:none;">
+          <span class="ic">📭</span>
+          مفيش جروبات مضافة لسه. ارجع لخطوة "الجروبات" وضيف واحد على الأقل.
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="toStep1Back">→ رجوع</button>
+          <button class="btn btn-accent" id="toStep3">التالي: المحتوى ←</button>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section id="panel-3" style="display:none;">
+        <h2>اكتب البوست</h2>
+        <p class="hint">النص والصور/الفيديو دول هيتكرروا بنفس الشكل في كل الجروبات المحددة.</p>
+
+        <div class="field">
+          <label for="postText">نص البوست</label>
+          <textarea id="postText" placeholder="اكتب نص البوست هنا..."></textarea>
+          <div class="char-count"><span id="charCount">0</span> حرف</div>
+        </div>
+
+        <div class="field">
+          <label>صور أو فيديو (اختياري)</label>
+          <div class="drop-zone" id="dropZone">
+            📎 اضغط هنا لاختيار صور/فيديو، أو اسحبها وارميها هنا
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none;">
+          </div>
+          <div class="media-grid" id="mediaGrid"></div>
+        </div>
+
+        <div class="info-box">
+          <span class="ic">💡</span>
+          <span>فيسبوك مبيسمحش برفع صور/فيديو تلقائي من أداة خارجية على البوستات، فالطريقة المضمونة إنك في مرحلة النشر تنزّل الميديا بضغطة واحدة، وبعدين ترفعها يدويًا من زرار "صورة/فيديو" بتاع فيسبوك — ثواني بسيطة وآمنة 100%.</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="toStep2Back">→ رجوع</button>
+          <button class="btn btn-accent" id="toStep4">التالي: ابدأ النشر ←</button>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section id="panel-4" style="display:none;">
+        <div id="publishActive">
+          <h2>وقت النشر</h2>
+          <p class="hint">افتح الجروب، الصق النص (ولو فيه ميديا نزّلها وارفعها)، انشر، بعدين ارجع هنا واضغط "تم ✅".</p>
+
+          <div class="route" id="routeDots"></div>
+
+          <div class="stop-card">
+            <div class="eyebrow" id="stopEyebrow">المحطة 1 من 1</div>
+            <h3 id="stopName">—</h3>
+            <div class="url" id="stopUrl">—</div>
+
+            <div class="stop-actions">
+              <button class="btn" id="copyTextBtn">📋 نسخ النص</button>
+              <button class="btn" id="downloadMediaBtn" style="display:none;">⬇ تنزيل الميديا</button>
+              <button class="btn btn-accent" id="openGroupBtn">↗ فتح الجروب</button>
+            </div>
+          </div>
+
+          <div class="preview-box" id="textPreview"></div>
+
+          <div class="actions">
+            <button class="btn btn-ghost" id="prevStopBtn">◀ المحطة السابقة</button>
+            <button class="btn btn-danger" id="skipStopBtn">تخطي هذا الجروب</button>
+            <button class="btn btn-success" id="doneStopBtn" style="margin-inline-start:auto;">✅ تم النشر — التالي</button>
+          </div>
+        </div>
+
+        <div id="publishDone" style="display:none; text-align:center;">
+          <div style="font-size:44px;">🎉</div>
+          <h2>خلصت القافلة!</h2>
+          <p class="hint" id="doneSummaryLine"></p>
+          <div class="summary-list" id="summaryList"></div>
+          <div class="actions" style="justify-content:center;">
+            <button class="btn btn-accent" id="newPostBtn">✎ بوست جديد بنفس الجروبات</button>
+            <button class="btn btn-ghost" id="backToSelectBtn">تغيير الجروبات</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <p class="footnote">قافلة بيساعدك تجهّز وتنسّق النشر اليدوي بس — مفيش أي نشر تلقائي أو تسجيل دخول لحسابك، وده بيحافظ على حسابك من أي حظر أو تقييد من فيسبوك.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const LS_GROUPS = "qafila_groups_v1";
+  const LS_TEXT = "qafila_text_v1";
+  const LS_SELECTED = "qafila_selected_v1";
+  const LS_PROGRESS = "qafila_progress_v1";
+
+  let groups = [];
+  let selectedIds = new Set();
+  let mediaFiles = []; // {id, name, type, url(objectURL), file}
+  let queue = []; // ordered group ids for step 4
+  let currentIndex = 0;
+  let doneIds = new Set();
+  let skippedIds = new Set();
+  let currentStep = 1;
+
+  // ---------- storage helpers ----------
+  function loadJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function saveJSON(key, val){
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){ /* storage full or blocked, ignore silently */ }
+  }
+  function uid(){ return 'g_' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+
+  // ---------- toast ----------
+  let toastTimer = null;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  // ---------- clipboard (robust) ----------
+  function copyText(text){
+    return new Promise((resolve)=>{
+      if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext !== false){
+        navigator.clipboard.writeText(text).then(()=>resolve(true)).catch(()=>resolve(fallbackCopy(text)));
+      }else{
+        resolve(fallbackCopy(text));
+      }
+    });
+  }
+  function fallbackCopy(text){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){ return false; }
+  }
+
+  // ---------- groups CRUD ----------
+  function loadGroups(){ groups = loadJSON(LS_GROUPS, []); }
+  function persistGroups(){ saveJSON(LS_GROUPS, groups); }
+
+  function addGroup(name, url){
+    groups.push({ id: uid(), name: name.trim(), url: url.trim() });
+    persistGroups();
+    renderGroupsList();
+    renderCheckList();
+  }
+  function deleteGroup(id){
+    groups = groups.filter(g=>g.id!==id);
+    selectedIds.delete(id);
+    persistGroups();
+    persistSelected();
+    renderGroupsList();
+    renderCheckList();
+  }
+
+  function renderGroupsList(){
+    const wrap = document.getElementById('groupsList');
+    const empty = document.getElementById('groupsEmpty');
+    wrap.innerHTML = '';
+    if(groups.length===0){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      row.innerHTML = `
+        <div class="g-info">
+          <div class="g-name">${escapeHTML(g.name)}</div>
+          <div class="g-url">${escapeHTML(g.url)}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" data-del="${g.id}">حذف</button>
+      `;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(confirm('تأكيد حذف الجروب ده من القائمة؟')) deleteGroup(btn.dataset.del);
+      });
+    });
+  }
+
+  function escapeHTML(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ---------- select step ----------
+  function persistSelected(){ saveJSON(LS_SELECTED, Array.from(selectedIds)); }
+  function loadSelected(){
+    const arr = loadJSON(LS_SELECTED, []);
+    selectedIds = new Set(arr.filter(id=>groups.some(g=>g.id===id)));
+  }
+
+  function renderCheckList(filter){
+    filter = (filter||'').trim().toLowerCase();
+    const wrap = document.getElementById('checkList');
+    const empty = document.getElementById('selectEmpty');
+    wrap.innerHTML = '';
+    if(groups.length===0){ empty.style.display='block'; updateSelectedCount(); return; }
+    empty.style.display='none';
+
+    const filtered = groups.filter(g=> g.name.toLowerCase().includes(filter));
+    filtered.forEach(g=>{
+      const item = document.createElement('div');
+      item.className = 'check-item' + (selectedIds.has(g.id) ? ' checked' : '');
+      item.innerHTML = `
+        <span class="checkbox">${selectedIds.has(g.id) ? '✓' : ''}</span>
+        <label>${escapeHTML(g.name)}<br><span class="g-url-small">${escapeHTML(g.url)}</span></label>
+      `;
+      item.addEventListener('click', ()=>{
+        if(selectedIds.has(g.id)) selectedIds.delete(g.id); else selectedIds.add(g.id);
+        persistSelected();
+        renderCheckList(document.getElementById('searchGroups').value);
+      });
+      wrap.appendChild(item);
+    });
+    updateSelectedCount();
+  }
+  function updateSelectedCount(){
+    document.getElementById('selectedCount').textContent = selectedIds.size + ' محدد';
+  }
+
+  // ---------- content step ----------
+  function persistText(){ saveJSON(LS_TEXT, document.getElementById('postText').value); }
+  function loadText(){
+    const t = loadJSON(LS_TEXT, '');
+    document.getElementById('postText').value = t;
+    document.getElementById('charCount').textContent = t.length;
+  }
+
+  function handleFiles(fileList){
+    Array.from(fileList).forEach(file=>{
+      const id = uid();
+      const url = URL.createObjectURL(file);
+      mediaFiles.push({ id, name:file.name, type:file.type, url, file });
+    });
+    renderMediaGrid();
+  }
+  function removeMedia(id){
+    mediaFiles = mediaFiles.filter(m=>m.id!==id);
+    renderMediaGrid();
+  }
+  function renderMediaGrid(){
+    const grid = document.getElementById('mediaGrid');
+    grid.innerHTML = '';
+    mediaFiles.forEach(m=>{
+      const thumb = document.createElement('div');
+      thumb.className = 'media-thumb';
+      let inner;
+      if(m.type.startsWith('image/')) inner = `<img src="${m.url}" alt="">`;
+      else if(m.type.startsWith('video/')) inner = `<video src="${m.url}" muted></video>`;
+      else inner = `<div class="file-ic">📄</div>`;
+      thumb.innerHTML = inner + `<button class="rm" data-rm="${m.id}" title="حذف">✕</button><div class="name">${escapeHTML(m.name)}</div>`;
+      grid.appendChild(thumb);
+    });
+    grid.querySelectorAll('[data-rm]').forEach(btn=>{
+      btn.addEventListener('click', ()=>removeMedia(btn.dataset.rm));
+    });
+  }
+  function downloadAllMedia(){
+    if(mediaFiles.length===0){ showToast('مفيش ميديا مرفوعة'); return; }
+    mediaFiles.forEach((m, i)=>{
+      setTimeout(()=>{
+        const a = document.createElement('a');
+        a.href = m.url;
+        a.download = m.name || ('media_'+i);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i*350); // تأخير بسيط بين كل تنزيل عشان المتصفح ميحظرش التنزيلات المتعددة
+    });
+    showToast('جاري تنزيل الملفات...');
+  }
+
+  // ---------- publish step ----------
+  function persistProgress(){
+    saveJSON(LS_PROGRESS, {
+      queue, currentIndex,
+      doneIds: Array.from(doneIds),
+      skippedIds: Array.from(skippedIds)
+    });
+  }
+  function loadProgress(){
+    const p = loadJSON(LS_PROGRESS, null);
+    if(p && Array.isArray(p.queue) && p.queue.length){
+      queue = p.queue.filter(id=>groups.some(g=>g.id===id));
+      currentIndex = Math.min(p.currentIndex||0, queue.length);
+      doneIds = new Set(p.doneIds||[]);
+      skippedIds = new Set(p.skippedIds||[]);
+      return queue.length>0;
+    }
+    return false;
+  }
+
+  function buildQueue(){
+    queue = groups.filter(g=>selectedIds.has(g.id)).map(g=>g.id);
+    currentIndex = 0;
+    doneIds = new Set();
+    skippedIds = new Set();
+    persistProgress();
+  }
+
+  function groupById(id){ return groups.find(g=>g.id===id); }
+
+  function renderRoute(){
+    const wrap = document.getElementById('routeDots');
+    wrap.innerHTML = '';
+    queue.forEach((id, i)=>{
+      if(i>0){
+        const line = document.createElement('div');
+        line.className = 'line';
+        wrap.appendChild(line);
+      }
+      const dot = document.createElement('div');
+      let cls = 'dot';
+      if(doneIds.has(id)) cls += ' done';
+      else if(skippedIds.has(id)) cls += ' skipped';
+      else if(i===currentIndex) cls += ' current';
+      dot.className = cls;
+      dot.textContent = doneIds.has(id) ? '✓' : (skippedIds.has(id) ? '×' : (i+1));
+      wrap.appendChild(dot);
+    });
+  }
+
+  async function renderStop(autoOpenCopy){
+    if(currentIndex >= queue.length){
+      showPublishDone();
+      return;
+    }
+    document.getElementById('publishActive').style.display = 'block';
+    document.getElementById('publishDone').style.display = 'none';
+
+    const id = queue[currentIndex];
+    const g = groupById(id);
+    document.getElementById('stopEyebrow').textContent = `المحطة ${currentIndex+1} من ${queue.length}`;
+    document.getElementById('stopName').textContent = g ? g.name : '(جروب محذوف)';
+    document.getElementById('stopUrl').textContent = g ? g.url : '';
+    document.getElementById('downloadMediaBtn').style.display = mediaFiles.length ? 'inline-flex' : 'none';
+    document.getElementById('textPreview').textContent = document.getElementById('postText').value || '(مفيش نص مكتوب)';
+    document.getElementById('prevStopBtn').disabled = currentIndex===0;
+
+    renderRoute();
+    persistProgress();
+
+    if(autoOpenCopy && g){
+      await copyText(document.getElementById('postText').value);
+      showToast('تم نسخ النص، وهيتفتح الجروب في تاب جديد');
+      window.open(g.url, '_blank', 'noopener');
+    }
+  }
+
+  function showPublishDone(){
+    document.getElementById('publishActive').style.display = 'none';
+    document.getElementById('publishDone').style.display = 'block';
+    document.getElementById('doneSummaryLine').textContent =
+      `تم النشر في ${doneIds.size} جروب، وتم تخطي ${skippedIds.size} من إجمالي ${queue.length}.`;
+    const list = document.getElementById('summaryList');
+    list.innerHTML = '';
+    queue.forEach(id=>{
+      const g = groupById(id);
+      const row = document.createElement('div');
+      row.className = 'summary-row';
+      const tag = doneIds.has(id) ? '<span class="tag ok">تم النشر</span>' : (skippedIds.has(id) ? '<span class="tag skip">تم التخطي</span>' : '');
+      row.innerHTML = `<span style="flex:1;">${escapeHTML(g? g.name : '(محذوف)')}</span>${tag}`;
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- steps navigation ----------
+  function goToStep(n){
+    if(n===2 && groups.length===0){ showToast('ضيف جروب واحد على الأقل الأول'); n=1; }
+    if(n===3 && selectedIds.size===0){ showToast('حدد جروب واحد على الأقل الأول'); n=2; }
+    if(n===4){
+      const text = document.getElementById('postText').value.trim();
+      if(selectedIds.size===0){ showToast('محتاج تحدد جروبات الأول'); n=2; }
+      else if(!text && mediaFiles.length===0){ showToast('اكتب نص أو ارفع صورة/فيديو الأول'); n=3; }
+    }
+    currentStep = n;
+    for(let i=1;i<=4;i++){
+      document.getElementById('panel-'+i).style.display = (i===n) ? 'block' : 'none';
+    }
+    document.querySelectorAll('.step-btn').forEach(btn=>{
+      const s = parseInt(btn.dataset.step,10);
+      btn.classList.toggle('active', s===n);
+      btn.classList.toggle('done', s<n);
+    });
+    if(n===4){
+      const stillValid = queue.length>0 && currentIndex < queue.length && loadProgress();
+      if(!queue.length || !arraysMatchSelection()){
+        buildQueue();
+        renderStop(true);
+      } else {
+        renderStop(false);
+      }
+    }
+  }
+  function arraysMatchSelection(){
+    if(queue.length !== selectedIds.size) return false;
+    return queue.every(id=>selectedIds.has(id));
+  }
+
+  // ---------- wire up events ----------
+  document.addEventListener('DOMContentLoaded', ()=>{
+    loadGroups();
+    loadSelected();
+    loadText();
+    renderGroupsList();
+    renderCheckList();
+
+    document.querySelectorAll('.step-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>goToStep(parseInt(btn.dataset.step,10)));
+    });
+
+    document.getElementById('addGroupBtn').addEventListener('click', ()=>{
+      const nameEl = document.getElementById('gName');
+      const urlEl = document.getElementById('gUrl');
+      const name = nameEl.value.trim();
+      const url = urlEl.value.trim();
+      if(!name || !url){ showToast('اكتب اسم ورابط الجروب'); return; }
+      if(!/^https?:\/\//i.test(url)){ showToast('الرابط لازم يبدأ بـ http:// أو https://'); return; }
+      addGroup(name, url);
+      nameEl.value=''; urlEl.value='';
+      nameEl.focus();
+      showToast('تمت إضافة الجروب ✅');
+    });
+
+    document.getElementById('toStep2').addEventListener('click', ()=>goToStep(2));
+    document.getElementById('toStep1Back').addEventListener('click', ()=>goToStep(1));
+    document.getElementById('toStep3').addEventListener('click', ()=>goToStep(3));
+    document.getElementById('toStep2Back').addEventListener('click', ()=>goToStep(2));
+    document.getElementById('toStep4').addEventListener('click', ()=>goToStep(4));
+
+    document.getElementById('searchGroups').addEventListener('input', (e)=>renderCheckList(e.target.value));
+    document.getElementById('selectAllBtn').addEventListener('click', ()=>{
+      groups.forEach(g=>selectedIds.add(g.id));
+      persistSelected();
+      renderCheckList(document.getElementById('searchGroups').value);
+    });
+    document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+      selectedIds.clear();
+      persistSelected();
+      renderCheckList(document.getElementById('searchGroups').value);
+    });
+
+    const postText = document.getElementById('postText');
+    postText.addEventListener('input', ()=>{
+      document.getElementById('charCount').textContent = postText.value.length;
+      persistText();
+    });
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    dropZone.addEventListener('click', ()=>fileInput.click());
+    fileInput.addEventListener('change', (e)=>{ handleFiles(e.target.files); fileInput.value=''; });
+    ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev, (e)=>{ e.preventDefault(); dropZone.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev, (e)=>{ e.preventDefault(); dropZone.classList.remove('drag'); }));
+    dropZone.addEventListener('drop', (e)=>{ if(e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+
+    document.getElementById('copyTextBtn').addEventListener('click', async ()=>{
+      const ok = await copyText(postText.value);
+      showToast(ok ? 'تم نسخ النص ✅' : 'حصل خطأ في النسخ، انسخه يدويًا من مربع النص فوق');
+    });
+    document.getElementById('downloadMediaBtn').addEventListener('click', downloadAllMedia);
+    document.getElementById('openGroupBtn').addEventListener('click', ()=>{
+      const g = groupById(queue[currentIndex]);
+      if(g) window.open(g.url, '_blank', 'noopener');
+    });
+    document.getElementById('prevStopBtn').addEventListener('click', ()=>{
+      if(currentIndex>0){ currentIndex--; renderStop(false); }
+    });
+    document.getElementById('skipStopBtn').addEventListener('click', ()=>{
+      skippedIds.add(queue[currentIndex]);
+      doneIds.delete(queue[currentIndex]);
+      currentIndex++;
+      renderStop(true);
+    });
+    document.getElementById('doneStopBtn').addEventListener('click', ()=>{
+      doneIds.add(queue[currentIndex]);
+      skippedIds.delete(queue[currentIndex]);
+      currentIndex++;
+      renderStop(true);
+    });
+    document.getElementById('newPostBtn').addEventListener('click', ()=>{
+      postText.value=''; persistText();
+      mediaFiles=[]; renderMediaGrid();
+      goToStep(3);
+    });
+    document.getElementById('backToSelectBtn').addEventListener('click', ()=>goToStep(2));
+
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(groups, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'qafila-groups-backup.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('تم تصدير قائمة الجروبات');
+    });
+    document.getElementById('importInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const imported = JSON.parse(reader.result);
+          if(!Array.isArray(imported)) throw new Error('bad format');
+          let added = 0;
+          imported.forEach(item=>{
+            if(item && item.name && item.url && !groups.some(g=>g.url===item.url)){
+              groups.push({ id: uid(), name:String(item.name), url:String(item.url) });
+              added++;
+            }
+          });
+          persistGroups();
+          renderGroupsList();
+          renderCheckList();
+          showToast(`تم استيراد ${added} جروب جديد`);
+        }catch(err){
+          showToast('الملف مش بصيغة صحيحة');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    goToStep(1);
+  });
+})();
+</script>
+</body>
+</html>
