@@ -119,7 +119,11 @@ pip install pyTelegramBotAPI requests
 
 #### 2. توكن البوت (Bot Token):
 - افتح [@BotFather](https://t.me/botfather) في تيليجرام وأنشئ بوتاً جديداً للحصول على التوكن.
-- التوكن الافتراضي مدمج بالفعل في ملف `bot.py`، ويمكنك تغييره إما بتعديل المتغير `TOKEN` في بداية الملف أو بتعيين متغير بيئي:
+- انسخ `.env.example` إلى `.env`، ثم ضع التوكن في قيمة `TELEGRAM_BOT_TOKEN`. يقرأ `bot.py` الملف `.env` تلقائياً، وملف `.env` مستثنى من Git:
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+- بدلاً من ذلك، يمكنك ضبط متغير البيئة قبل التشغيل:
 ```powershell
 $env:TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
 ```

@@ -1,4 +1,7 @@
 /.venv
+/.env
+/.env.*
+!/.env.example
 /groups.json
 /groups_6922180755.json
 /groups_8078944981.json

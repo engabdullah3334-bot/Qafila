@@ -28,10 +28,42 @@ from telebot import types
 # ---------------------------------------------------------------------------
 # الإعدادات العامة والتوكن
 # ---------------------------------------------------------------------------
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8977546165:AAF4xQYKIMuAyOR7-2zAhO59ZPW4hmV37Ro")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def load_environment_file():
+    """Load environment values from the local .env file without overriding the process environment."""
+    env_file = os.path.join(BASE_DIR, ".env")
+    if not os.path.isfile(env_file):
+        return
+
+    try:
+        with open(env_file, "r", encoding="utf-8-sig") as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+                    value = value[1:-1]
+                if key:
+                    os.environ.setdefault(key, value)
+    except OSError as exc:
+        raise RuntimeError(f"Unable to read environment file: {env_file}") from exc
+
+
+load_environment_file()
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not TOKEN or not TOKEN.strip():
+    raise RuntimeError(
+        "Telegram bot token is missing. Set TELEGRAM_BOT_TOKEN in .env or the process environment."
+    )
+
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GROUPS_FILE = os.path.join(BASE_DIR, "groups.json")
 
 # ---------------------------------------------------------------------------
